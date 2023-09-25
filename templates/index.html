@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Cash Reader</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo"><span>V</span>oice <span>C</span>ash<span>R</span>eader</a>
+        <div class="menuToggle" onclick="toggleMenu();"> </div>
+        <nav>
+        <ul class="navigation">
+			<li><div class="dropdown">
+				<a href="#banner" onclick="toggleMenu();">
+				<button class="dropbtn">
+				<h3 style="font-family: cursive; font-size:1.5em;" >Home</h3></a>
+                </div>
+					</li>
+        </ul>
+        </nav>
+    </header>
+    <section class="banner" id="banner">
+        <div class="content">
+            <h2>Welcome to the Blind Website</h2>
+            <div class="title">
+                <a href="#menu" class="btn">Start</a>
+            </div>
+        </div>
+    </section>
+    <main>
+    <section class="menu" id="menu">
+        <div class="title">
+            <h2 class="titleText"><span>M</span>oney<span>  C</span>lassification</h2>
+            <p></p>
+        </div>
+        <div class="content">
+            <div class="box">
+                <video id="camera-feed" autoplay></video>
+                <div class='title'>
+                    <a href="#hasil" onclick="toggleMenu();"><button class='btn btn-success' id="capture-button"><i class="fas fa-camera"></i></button></a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="hasil" id="hasil">
+        
+        <div class="content">
+            <div class="box">
+                <canvas id="canvas"></canvas><br>
+                <img src='../static/uploads/{{file }}'><br>
+                <center><p> ini adalah uang sebesar "{{prediction}}"</p></center>
+                <center><p> akurasi sebesar "{{akurasi}}"</p></center>
+                <form class="p-3 text-center" method="POST" action="/predict" enctype="multipart/form-data">
+                    <div class='title'>
+                        <button type='submit' class='btn btn-success'> Classification
+                        </button>
+                    </div>
+                   <center> 
+                    <audio id="audioPlayer" controls autoplay>
+                    <source src="{{audio_src}}" type="audio/mp3">
+                </audio>
+            </center>
+                </form>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer>
+        <div class="copyrightText">
+            <p>Copyright 2023 <a href="#"> Voice Cash Reader</a>. All right Reserved</p>
+        </div>
+    </footer>
+    <script>
+        const video = document.getElementById('camera-feed');
+        const canvas = document.getElementById('canvas');
+        const resultImage = document.getElementById('result-image');
+        const captureButton = document.getElementById('capture-button');
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing the camera:', error);
+            }
+        }
+        captureButton.addEventListener('click', capturePhoto);
+        function capturePhoto() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Convert the captured photo to a data URL
+            const photoDataUrl = canvas.toDataURL('image/jpeg');
+
+            // Send the data URL to the Flask server for background removal
+            fetch('/capture', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ photoDataUrl }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the background-removed image
+                resultImage.src = 'data:image/jpeg;base64,' + data.result;
+            });
+        }
+        // Initialize the camera
+        initCamera();
+        function playAudio(src) {
+            var audio = document.getElementById("audioPlayer");
+            audio.src = src;
+            audio.play();
+        }
+
+</script>    
+</body>
+</html>
